@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 from typing import Optional
 
+
 class ProfileCreate(BaseModel):
     name: str
     city: str
@@ -9,8 +10,11 @@ class ProfileCreate(BaseModel):
     day: int
     hour: int
     minute: int
-    lat: float
-    lon: float
+    lat: Optional[float] = None
+    lon: Optional[float] = None
+    # Hours east of UTC (e.g. +3.0 Istanbul, -5.0 New York). Applied to wall-clock birth time.
+    utc_offset: float = 0.0
+
 
 class BirthData(BaseModel):
     name: str
@@ -20,5 +24,6 @@ class BirthData(BaseModel):
     hour: int
     minute: int
     city: str
-    lat: Optional[float] = None  # Eğer varsa kullanırız
+    lat: Optional[float] = None
     lon: Optional[float] = None
+    utc_offset: float = 0.0

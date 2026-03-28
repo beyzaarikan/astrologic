@@ -8,7 +8,7 @@ load_dotenv()
 
 # local PostgreSQL connection string
 # Format: postgresql://username:password@localhost:5432/db_name
-SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@db:5432/astrologic")
+SQLALCHEMY_DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:password@localhost:5432/astrologic")
 
 # Engine: the database engine
 engine = create_engine(SQLALCHEMY_DATABASE_URL)

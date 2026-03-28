@@ -7,16 +7,16 @@ from app.db.database import get_db # Veritabanı bağlantısı için şart
 from fastapi.security import OAuth2PasswordBearer
 from app.models import models
 
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/login")
 db_dependency = Annotated[Session, Depends(get_db)]
 
 async def get_current_user(
-    token: Annotated[str, Depends(oauth2_scheme)], 
+    token: Annotated[str, Depends(oauth2_scheme)],
     db: db_dependency
 ):
     credentials_exception = HTTPException(
-        status_code=401, 
-        detail="Geçersiz kimlik bilgileri",
+        status_code=401,
+        detail="Invalid credentials",
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
@@ -24,13 +24,10 @@ async def get_current_user(
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
-    except Exception:
+    except JWTError:  # specific — only catches token errors, not DB errors
         raise credentials_exception
 
-    # İŞTE BURASI: ID ile veritabanından kullanıcıyı çekiyoruz
     user = db.query(models.User).filter(models.User.id == int(user_id)).first()
-    
     if user is None:
         raise credentials_exception
-        
     return user
