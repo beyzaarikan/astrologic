@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import SQLAlchemyError
 from typing import Annotated
-from datetime import datetime, timedelta
+from datetime import datetime
 from geopy.geocoders import Nominatim
 
 from app.db.database import get_db
@@ -10,6 +10,7 @@ from app.models import models
 from app.schemas.profile import BirthData, ProfileCreate
 from app.services.astronomy import CelestialEngine
 from app.services.ai_engine import GeminiInterpreter
+from app.services.birth_time import local_wall_time_to_utc_naive
 from app.api.dependencies import get_current_user
 
 geolocator = Nominatim(user_agent="astrologic_app")
@@ -61,11 +62,6 @@ async def get_profile_detail(
     }
 
 
-def _local_to_utc_naive(local_dt: datetime, utc_offset_hours: float) -> datetime:
-    """Convert wall-clock local time to naive UTC instant (Swiss Ephemeris expects UT)."""
-    return local_dt - timedelta(hours=utc_offset_hours)
-
-
 @router.post("/create-and-analyze", status_code=status.HTTP_201_CREATED)
 async def create_profile_and_run_analysis(
     data: ProfileCreate,
@@ -80,8 +76,19 @@ async def create_profile_and_run_analysis(
     else:
         lat, lon = data.lat, data.lon
 
-    local_dt = datetime(data.year, data.month, data.day, data.hour, data.minute)
-    utc_birth_dt = _local_to_utc_naive(local_dt, data.utc_offset)
+    try:
+        utc_birth_dt, effective_offset = local_wall_time_to_utc_naive(
+            data.year,
+            data.month,
+            data.day,
+            data.hour,
+            data.minute,
+            lat,
+            lon,
+            data.utc_offset,
+        )
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     new_profile = models.Profile(
         user_id=current_user.id,
@@ -90,7 +97,7 @@ async def create_profile_and_run_analysis(
         birth_date=utc_birth_dt,
         latitude=lat,
         longitude=lon,
-        utc_offset_hours=data.utc_offset,
+        utc_offset_hours=effective_offset,
     )
 
     try:
@@ -146,8 +153,19 @@ async def analyze_birth_chart(
             current_lat = data.lat
             current_lon = data.lon
 
-        local_time = datetime(data.year, data.month, data.day, data.hour, data.minute)
-        utc_birth_dt = _local_to_utc_naive(local_time, data.utc_offset)
+        try:
+            utc_birth_dt, _ = local_wall_time_to_utc_naive(
+                data.year,
+                data.month,
+                data.day,
+                data.hour,
+                data.minute,
+                current_lat,
+                current_lon,
+                data.utc_offset,
+            )
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
 
         astro_engine = CelestialEngine(utc_birth_dt, current_lat, current_lon, utc_offset=0.0)
 
