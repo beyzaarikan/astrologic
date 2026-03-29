@@ -14,7 +14,7 @@ class GeminiInterpreter:
         if not api_key:
             raise ValueError("GEMINI_API_KEY is not set!")
         self.client = genai.Client(api_key=api_key)
-        self.model_id = "gemini-2.0-flash"
+        self.model_id = "gemini-2.5-flash-lite"
 
     def _normalize_chart_data(self, chart_data):
         """Support legacy rows where chart_data was a flat list of points."""
@@ -56,22 +56,46 @@ class GeminiInterpreter:
         planets, aspects, houses = self._prepare_data_text(chart_data)
 
         prompt = f"""
-You are an elite, professional Psychological Astrologer.
-Provide a deep, synthesized birth chart analysis for: {profile_name}.
+            You are an elite Psychological Astrologer.
+            Write a structured birth chart analysis for: {profile_name}.
+            Avoid listing: "Don't just list planets. Instead, tell a story about how their energies merge."
+            Target Audience: "Write for an intelligent adult seeking deep psychological insight."
+            Formatting: "Use bold text for key psychological archetypes but never for planet names."
+            
+            FORMAT YOUR RESPONSE EXACTLY LIKE THIS (use markdown):
 
-STRICT GUIDELINES:
-1. SYNTHESIS: Combine planets, houses, and aspects into a coherent narrative.
-2. TONE: Serious, analytical, and insightful. No clichés.
-3. LANGUAGE: Report must be in English.
+            ## Core Identity
+            [Sun, Moon, Ascendant synthesis — 2-3 paragraphs]
 
-DATA:
---- PLANETS & ANGLES ---
-{planets}
---- ASPECTS ---
-{aspects}
---- HOUSE CUSPS ---
-{houses}
-"""
+            ## Mind & Communication
+            [Mercury, 3rd house — 1-2 paragraphs]
+
+            ## Love & Relationships
+            [Venus, 7th house — 1-2 paragraphs]
+
+            ## Drive & Ambition
+            [Mars, 1st/10th house — 1-2 paragraphs]
+
+            ## Life Challenges & Growth
+            [Saturn, South/North Node aspects — 1-2 paragraphs]
+
+            ## Key Aspects
+            [Most significant aspects and their meaning — 1-2 paragraphs]
+
+            STRICT RULES:
+            - NO raw data, NO JSON, NO degree numbers in the text
+            - Synthesize everything into flowing narrative
+            - Professional, analytical tone
+            - English only
+
+            RAW DATA (for your reference only, do not copy into output):
+            --- PLANETS ---
+            {planets}
+            --- ASPECTS ---
+            {aspects}
+            --- HOUSES ---
+            {houses}
+            """
         try:
             response = self.client.models.generate_content(model=self.model_id, contents=prompt)
             return response.text

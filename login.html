@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AstroLogic</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cinzel:wght@400;600&family=Inter:wght@300;400&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#05040f; --bg2:#0a0918; --card:#0f0e1f; --card2:#161428;
+    --border:#2a2550; --border2:#3d3870;
+    --gold:#c9a84c; --gold-dim:rgba(201,168,76,0.12);
+    --text:#e8e4d9; --text-dim:#8b8499; --text-muted:#524e62;
+    --accent2:#a99be0; --danger:#c0454a;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+    background-image:
+      radial-gradient(1px 1px at 10% 15%,rgba(255,255,255,0.4) 0%,transparent 100%),
+      radial-gradient(1px 1px at 25% 42%,rgba(255,255,255,0.3) 0%,transparent 100%),
+      radial-gradient(1.5px 1.5px at 40% 8%,rgba(255,255,255,0.5) 0%,transparent 100%),
+      radial-gradient(1px 1px at 55% 70%,rgba(255,255,255,0.3) 0%,transparent 100%),
+      radial-gradient(1px 1px at 70% 25%,rgba(255,255,255,0.4) 0%,transparent 100%),
+      radial-gradient(1.5px 1.5px at 85% 55%,rgba(255,255,255,0.5) 0%,transparent 100%),
+      radial-gradient(1px 1px at 92% 12%,rgba(255,255,255,0.3) 0%,transparent 100%),
+      radial-gradient(1px 1px at 15% 80%,rgba(255,255,255,0.2) 0%,transparent 100%),
+      radial-gradient(1px 1px at 60% 90%,rgba(255,255,255,0.3) 0%,transparent 100%),
+      radial-gradient(1px 1px at 33% 60%,rgba(255,255,255,0.2) 0%,transparent 100%);}
+  #app{position:relative;z-index:1;}
+  .screen{display:none;min-height:100vh;}
+  .screen.active{display:flex;flex-direction:column;}
+
+  /* AUTH */
+  #auth-screen{align-items:center;justify-content:center;padding:2rem;}
+  .auth-box{width:100%;max-width:420px;background:var(--card);border:1px solid var(--border);padding:3rem 2.5rem;position:relative;box-shadow:0 0 40px rgba(201,168,76,0.06);}
+  .auth-box::before{content:'';position:absolute;top:-1px;left:50%;transform:translateX(-50%);width:60%;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);}
+  .logo{text-align:center;margin-bottom:2.5rem;}
+  .logo-symbol{font-size:2rem;display:block;margin-bottom:0.5rem;filter:drop-shadow(0 0 12px rgba(201,168,76,0.5));}
+  .logo h1{font-family:'Cinzel',serif;font-size:1.8rem;color:var(--gold);letter-spacing:0.15em;}
+  .logo p{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--text-dim);font-size:0.95rem;margin-top:0.3rem;}
+  .tab-row{display:flex;border-bottom:1px solid var(--border);margin-bottom:2rem;}
+  .tab-btn{flex:1;padding:0.75rem;background:none;border:none;color:var(--text-muted);font-family:'Cinzel',serif;font-size:0.75rem;letter-spacing:0.1em;cursor:pointer;transition:color 0.2s;border-bottom:2px solid transparent;margin-bottom:-1px;}
+  .tab-btn.active{color:var(--gold);border-bottom-color:var(--gold);}
+  .tab-content{display:none;}.tab-content.active{display:block;}
+  label{display:block;font-size:0.7rem;letter-spacing:0.12em;color:var(--text-dim);text-transform:uppercase;margin-bottom:0.4rem;font-family:'Cinzel',serif;}
+  input,select,textarea{width:100%;background:var(--bg2);border:1px solid var(--border);color:var(--text);padding:0.75rem 1rem;font-family:'Inter',sans-serif;font-size:0.9rem;outline:none;transition:border-color 0.2s,box-shadow 0.2s;margin-bottom:1.2rem;}
+  input:focus,select:focus,textarea:focus{border-color:var(--gold);box-shadow:0 0 0 1px rgba(201,168,76,0.2);}
+  .btn{width:100%;padding:0.85rem;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:'Cinzel',serif;font-size:0.8rem;letter-spacing:0.15em;cursor:pointer;transition:all 0.2s;position:relative;overflow:hidden;}
+  .btn::before{content:'';position:absolute;inset:0;background:var(--gold);transform:translateX(-100%);transition:transform 0.3s ease;z-index:0;}
+  .btn:hover::before{transform:translateX(0);}
+  .btn:hover{color:var(--bg);}
+  .btn span{position:relative;z-index:1;}
+  .btn-secondary{border-color:var(--border2);color:var(--text-dim);}
+  .btn-secondary::before{background:var(--border2);}
+  .btn-secondary:hover{color:var(--text);}
+  .btn-sm{width:auto;padding:0.5rem 1.2rem;font-size:0.7rem;}
+  .btn-danger{border-color:var(--danger);color:var(--danger);}
+  .btn-danger::before{background:var(--danger);}
+  .error-msg{background:rgba(192,69,74,0.1);border:1px solid rgba(192,69,74,0.3);color:#e07a7e;padding:0.75rem 1rem;font-size:0.85rem;margin-bottom:1rem;display:none;}
+  .success-msg{background:rgba(74,156,124,0.1);border:1px solid rgba(74,156,124,0.3);color:#6ec9a8;padding:0.75rem 1rem;font-size:0.85rem;margin-bottom:1rem;display:none;}
+
+  /* MAIN */
+  #main-screen{flex-direction:row;}
+  .sidebar{width:280px;min-width:280px;background:var(--card);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;position:sticky;top:0;}
+  .sidebar-header{padding:1.5rem;border-bottom:1px solid var(--border);}
+  .sidebar-logo{font-family:'Cinzel',serif;font-size:1rem;color:var(--gold);letter-spacing:0.1em;}
+  .user-info{padding:1rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:0.75rem;}
+  .user-avatar{width:32px;height:32px;border:1px solid var(--gold);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.8rem;color:var(--gold);font-family:'Cinzel',serif;flex-shrink:0;}
+  .user-email{font-size:0.75rem;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .sidebar-section{padding:1rem 1.5rem 0.5rem;font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;}
+  .profile-list{flex:1;overflow-y:auto;padding:0.5rem;}
+  .profile-list::-webkit-scrollbar{width:4px;}
+  .profile-list::-webkit-scrollbar-thumb{background:var(--border);}
+  .profile-item{padding:0.85rem 1rem;cursor:pointer;border:1px solid transparent;margin-bottom:0.3rem;transition:all 0.2s;position:relative;}
+  .profile-item:hover{background:var(--gold-dim);border-color:rgba(201,168,76,0.2);}
+  .profile-item.active{background:var(--gold-dim);border-color:rgba(201,168,76,0.4);}
+  .profile-item.active::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:var(--gold);}
+  .profile-name{font-family:'Cormorant Garamond',serif;font-size:1rem;color:var(--text);font-weight:600;}
+  .profile-meta{font-size:0.7rem;color:var(--text-muted);margin-top:0.2rem;}
+  .sidebar-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:0.5rem;}
+  .main-content{flex:1;display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+  .content-header{padding:1.5rem 2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:var(--card);flex-shrink:0;}
+  .content-title{font-family:'Cinzel',serif;font-size:0.75rem;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;}
+  .view-tabs{display:flex;gap:0.25rem;background:var(--bg2);padding:0.25rem;border:1px solid var(--border);}
+  .view-tab{padding:0.4rem 1rem;background:none;border:none;color:var(--text-muted);font-family:'Cinzel',serif;font-size:0.65rem;letter-spacing:0.1em;cursor:pointer;transition:all 0.2s;}
+  .view-tab.active{background:var(--gold-dim);color:var(--gold);}
+  .content-body{flex:1;overflow-y:auto;padding:2rem;}
+  .content-body::-webkit-scrollbar{width:4px;}
+  .content-body::-webkit-scrollbar-thumb{background:var(--border);}
+  .view{display:none;}.view.active{display:block;}
+  .empty-state{display:flex;flex-direction:column;align-items:center;justify-content:center;height:60vh;text-align:center;gap:1rem;}
+  .empty-state .symbol{font-size:4rem;opacity:0.3;}
+  .empty-state h2{font-family:'Cormorant Garamond',serif;font-size:1.8rem;color:var(--text-dim);font-weight:300;font-style:italic;}
+  .empty-state p{font-size:0.85rem;color:var(--text-muted);max-width:300px;line-height:1.6;}
+
+  /* Report */
+  .report-container{max-width:800px;margin:0 auto;}
+  .report-header{margin-bottom:2rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border);position:relative;}
+  .report-header::after{content:'';position:absolute;bottom:-1px;left:0;width:80px;height:1px;background:var(--gold);}
+  .report-name{font-family:'Cinzel',serif;font-size:1.8rem;color:var(--gold);letter-spacing:0.05em;}
+  .report-date{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--text-dim);font-size:1rem;margin-top:0.3rem;}
+  .report-body{font-family:'Cormorant Garamond',serif;font-size:1.15rem;line-height:1.9;color:var(--text);}
+  .report-body h2{font-family:'Cinzel',serif;font-size:0.85rem;letter-spacing:0.15em;color:var(--gold);margin:2rem 0 0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);text-transform:uppercase;}
+  .report-body p{margin-bottom:1rem;}
+
+  /* Chart Data */
+  .chart-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:0.75rem;margin-top:1rem;}
+  .chart-item{background:var(--card2);border:1px solid var(--border);padding:0.85rem 1rem;transition:border-color 0.2s;}
+  .chart-item:hover{border-color:var(--border2);}
+  .chart-planet{font-family:'Cinzel',serif;font-size:0.7rem;letter-spacing:0.1em;color:var(--gold);text-transform:uppercase;}
+  .chart-sign{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--text);margin-top:0.2rem;}
+  .chart-degree{font-size:0.7rem;color:var(--text-muted);margin-top:0.1rem;}
+  .aspect-row{display:flex;align-items:center;padding:0.6rem 0;border-bottom:1px solid rgba(42,37,80,0.5);gap:0.75rem;}
+  .aspect-type{font-family:'Cinzel',serif;font-size:0.65rem;color:var(--accent2);letter-spacing:0.08em;min-width:90px;}
+  .aspect-planets{color:var(--text);flex:1;font-size:0.85rem;}
+  .aspect-orb{color:var(--text-muted);font-size:0.75rem;}
+  .section-title{font-family:'Cinzel',serif;font-size:0.75rem;letter-spacing:0.15em;color:var(--text-muted);text-transform:uppercase;margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border);}
+  .divider{height:1px;background:var(--border);margin:1.5rem 0;}
+
+  /* Chat */
+  .chat-profile-info{background:var(--card2);border:1px solid var(--border);padding:1rem 1.5rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:1rem;}
+  .chat-profile-name{font-family:'Cormorant Garamond',serif;font-size:1.1rem;color:var(--gold);}
+  .chat-profile-sub{font-size:0.75rem;color:var(--text-muted);margin-top:0.1rem;}
+  .badge{display:inline-block;padding:0.2rem 0.6rem;font-family:'Cinzel',serif;font-size:0.6rem;letter-spacing:0.1em;border:1px solid var(--border2);color:var(--accent2);}
+  .chat-messages{overflow-y:auto;margin-bottom:1rem;max-height:calc(100vh - 340px);}
+  .chat-messages::-webkit-scrollbar{width:4px;}
+  .chat-messages::-webkit-scrollbar-thumb{background:var(--border);}
+  .msg{margin-bottom:1.25rem;display:flex;gap:0.75rem;animation:fadeUp 0.3s ease;}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .msg.user{flex-direction:row-reverse;}
+  .msg-avatar{width:28px;height:28px;border:1px solid var(--border2);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.7rem;flex-shrink:0;align-self:flex-start;margin-top:0.2rem;}
+  .msg.user .msg-avatar{border-color:var(--gold);color:var(--gold);}
+  .msg-bubble{max-width:75%;padding:0.85rem 1.1rem;font-family:'Cormorant Garamond',serif;font-size:1.05rem;line-height:1.7;}
+  .msg.user .msg-bubble{background:var(--gold-dim);border:1px solid rgba(201,168,76,0.25);color:var(--text);}
+  .msg.model .msg-bubble{background:var(--card2);border:1px solid var(--border);color:var(--text);}
+  .chat-input-row{display:flex;gap:0.75rem;align-items:flex-end;}
+  .chat-input-row textarea{flex:1;resize:none;min-height:52px;max-height:120px;margin-bottom:0;font-family:'Cormorant Garamond',serif;font-size:1rem;}
+  .chat-input-row .btn{width:auto;padding:0.85rem 1.5rem;white-space:nowrap;}
+  .typing-indicator{display:flex;gap:4px;padding:0.85rem 1.1rem;background:var(--card2);border:1px solid var(--border);width:fit-content;}
+  .typing-dot{width:5px;height:5px;background:var(--text-muted);border-radius:50%;animation:typingBounce 1.2s ease infinite;}
+  .typing-dot:nth-child(2){animation-delay:0.2s}
+  .typing-dot:nth-child(3){animation-delay:0.4s}
+  @keyframes typingBounce{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-6px);opacity:0.6}}
+
+  /* Form */
+  .form-card{max-width:560px;background:var(--card);border:1px solid var(--border);padding:2rem;position:relative;}
+  .form-card::before{content:'';position:absolute;top:-1px;left:2rem;width:40px;height:1px;background:var(--gold);}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem;}
+
+  /* Loading */
+  .loading-overlay{position:fixed;inset:0;background:rgba(5,4,15,0.85);display:none;align-items:center;justify-content:center;z-index:1000;flex-direction:column;gap:1rem;}
+  .loading-overlay.active{display:flex;}
+  .spinner{width:48px;height:48px;border:1px solid var(--border2);border-top-color:var(--gold);border-radius:50%;animation:spin 1s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{font-family:'Cormorant Garamond',serif;font-style:italic;color:var(--text-dim);font-size:1rem;}
+</style>
+</head>
+<body>
+<div id="app">
+
+<!-- AUTH SCREEN -->
+<div id="auth-screen" class="screen active">
+  <div class="auth-box">
+    <div class="logo">
+      <span class="logo-symbol">✦</span>
+      <h1>ASTROLOGIC</h1>
+      <p>Read the stars, know thyself</p>
+    </div>
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+      <button class="tab-btn" onclick="switchTab('register')">Register</button>
+    </div>
+    <div id="tab-login" class="tab-content active">
+      <div class="error-msg" id="login-error"></div>
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="you@example.com" onkeydown="if(event.key==='Enter')login()">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="••••••••" onkeydown="if(event.key==='Enter')login()">
+      <button class="btn" onclick="login()"><span>ENTER THE COSMOS</span></button>
+    </div>
+    <div id="tab-register" class="tab-content">
+      <div class="error-msg" id="register-error"></div>
+      <div class="success-msg" id="register-success"></div>
+      <label>Email</label>
+      <input type="email" id="reg-email" placeholder="you@example.com">
+      <label>Password</label>
+      <input type="password" id="reg-password" placeholder="••••••••">
+      <button class="btn" onclick="register()"><span>CREATE ACCOUNT</span></button>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN SCREEN -->
+<div id="main-screen" class="screen">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <div class="sidebar-logo">✦ ASTROLOGIC</div>
+    </div>
+    <div class="user-info">
+      <div class="user-avatar" id="user-avatar">?</div>
+      <div class="user-email" id="user-email-display">—</div>
+    </div>
+    <div class="sidebar-section">Birth Charts</div>
+    <div class="profile-list" id="profile-list">
+      <div style="padding:1rem;color:var(--text-muted);font-size:0.8rem;text-align:center;">Loading…</div>
+    </div>
+    <div class="sidebar-footer">
+      <button class="btn btn-secondary btn-sm" style="flex:1" onclick="showNewProfile()"><span>+ New Chart</span></button>
+      <button class="btn btn-danger btn-sm" onclick="logout()"><span>Exit</span></button>
+    </div>
+  </aside>
+
+  <main class="main-content">
+    <div class="content-header">
+      <div class="content-title" id="content-title">Select a chart</div>
+      <div class="view-tabs" id="view-tabs" style="display:none">
+        <button class="view-tab active" onclick="switchView('report')">Report</button>
+        <button class="view-tab" onclick="switchView('chart')">Chart Data</button>
+        <button class="view-tab" onclick="switchView('chat')">Ask ✦</button>
+      </div>
+    </div>
+    <div class="content-body">
+
+      <!-- Welcome -->
+      <div class="view active" id="view-welcome">
+        <div class="empty-state">
+          <div class="symbol">✦</div>
+          <h2>Welcome to AstroLogic</h2>
+          <p>Select a birth chart from the sidebar, or create a new one to begin your reading.</p>
+          <button class="btn btn-sm" style="margin-top:1rem" onclick="showNewProfile()"><span>+ Create First Chart</span></button>
+        </div>
+      </div>
+
+      <!-- New Profile Form -->
+      <div class="view" id="view-new-profile">
+        <div class="form-card">
+          <div class="section-title">New Birth Chart</div>
+          <div class="error-msg" id="profile-error"></div>
+          <label>Name</label>
+          <input type="text" id="p-name" placeholder="e.g. Jane Doe">
+          <label>Birth City</label>
+          <input type="text" id="p-city" placeholder="e.g. Istanbul">
+          <div class="form-row">
+            <div><label>Year</label><input type="number" id="p-year" placeholder="1990"></div>
+            <div><label>Month</label><input type="number" id="p-month" placeholder="5" min="1" max="12"></div>
+          </div>
+          <div class="form-row">
+            <div><label>Day</label><input type="number" id="p-day" placeholder="15" min="1" max="31"></div>
+            <div><label>Hour</label><input type="number" id="p-hour" placeholder="14" min="0" max="23"></div>
+          </div>
+          <label>Minute</label>
+          <input type="number" id="p-minute" placeholder="30" min="0" max="59">
+          <button class="btn" onclick="createProfile()"><span>CAST THE CHART</span></button>
+        </div>
+      </div>
+
+      <!-- Report View -->
+      <div class="view" id="view-report">
+        <div class="report-container">
+          <div class="report-header">
+            <div class="report-name" id="report-name">—</div>
+            <div class="report-date" id="report-date">—</div>
+          </div>
+          <div class="report-body" id="report-body"></div>
+        </div>
+      </div>
+
+      <!-- Chart Data View -->
+      <div class="view" id="view-chart">
+        <div class="section-title">Planets & Points</div>
+        <div class="chart-grid" id="chart-grid"></div>
+        <div class="divider"></div>
+        <div class="section-title">Aspects</div>
+        <div id="aspects-list"></div>
+      </div>
+
+      <!-- Chat View -->
+      <div class="view" id="view-chat">
+        <div class="chat-profile-info">
+          <div>
+            <div class="chat-profile-name" id="chat-profile-name">—</div>
+            <div class="chat-profile-sub">Ask anything about this birth chart</div>
+          </div>
+          <div class="badge">AI</div>
+        </div>
+        <div class="chat-messages" id="chat-messages"></div>
+        <div class="chat-input-row">
+          <textarea id="chat-input" placeholder="Ask about this chart… (Enter to send, Shift+Enter for new line)" rows="2"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMessage()}"></textarea>
+          <button class="btn btn-sm" onclick="sendMessage()"><span>Send ✦</span></button>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+</div>
+
+<!-- Loading overlay -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Reading the stars…</div>
+</div>
+
+<script>
+const API = 'http://localhost:8000';
+let token = localStorage.getItem('astro_token');
+let currentEmail = localStorage.getItem('astro_email') || '';
+let selectedProfile = null;
+let selectedAnalysis = null;
+
+// On load: if we have a token already, go straight to main
+if (token) showMain();
+
+// ─── Helpers ────────────────────────────────────────────────────
+function showLoading(msg) {
+  document.getElementById('loading-text').textContent = msg || 'Reading the stars…';
+  document.getElementById('loading').classList.add('active');
+}
+function hideLoading() {
+  document.getElementById('loading').classList.remove('active');
+}
+function showErr(el, msg) {
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  const el = document.getElementById('view-' + name);
+  if (el) el.classList.add('active');
+}
+function switchView(name) {
+  showView(name);
+  const names = ['report', 'chart', 'chat'];
+  document.querySelectorAll('.view-tab').forEach((t, i) =>
+    t.classList.toggle('active', names[i] === name));
+}
+
+// ─── Auth ────────────────────────────────────────────────────────
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b, i) =>
+    b.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'register')));
+  document.getElementById('tab-login').classList.toggle('active', tab === 'login');
+  document.getElementById('tab-register').classList.toggle('active', tab === 'register');
+}
+
+async function login() {
+  const email = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const err = document.getElementById('login-error');
+  err.style.display = 'none';
+  if (!email || !password) { showErr(err, 'Please fill in all fields.'); return; }
+
+  showLoading('Aligning the stars…');
+  try {
+    const form = new URLSearchParams();
+    form.append('username', email);
+    form.append('password', password);
+    const res = await fetch(`${API}/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: form
+    });
+    const data = await res.json();
+    if (!res.ok) { showErr(err, data.detail || 'Login failed.'); return; }
+    token = data.access_token;
+    currentEmail = email;
+    localStorage.setItem('astro_token', token);
+    localStorage.setItem('astro_email', email);
+    showMain();
+  } catch (e) {
+    showErr(err, 'Could not connect to server.');
+  } finally { hideLoading(); }
+}
+
+async function register() {
+  const email = document.getElementById('reg-email').value.trim();
+  const password = document.getElementById('reg-password').value;
+  const err = document.getElementById('register-error');
+  const suc = document.getElementById('register-success');
+  err.style.display = 'none'; suc.style.display = 'none';
+  if (!email || !password) { showErr(err, 'Please fill in all fields.'); return; }
+
+  showLoading('Creating your account…');
+  try {
+    const res = await fetch(`${API}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+    if (!res.ok) { showErr(err, data.detail || 'Registration failed.'); return; }
+    suc.textContent = 'Account created! You can now log in.';
+    suc.style.display = 'block';
+    switchTab('login');
+    document.getElementById('login-email').value = email;
+  } catch (e) {
+    showErr(err, 'Could not connect to server.');
+  } finally { hideLoading(); }
+}
+
+function logout() {
+  token = null; selectedProfile = null; selectedAnalysis = null;
+  localStorage.removeItem('astro_token');
+  localStorage.removeItem('astro_email');
+  document.getElementById('main-screen').classList.remove('active');
+  document.getElementById('auth-screen').classList.add('active');
+}
+
+// ─── Main ─────────────────────────────────────────────────────────
+function showMain() {
+  document.getElementById('auth-screen').classList.remove('active');
+  document.getElementById('main-screen').classList.add('active');
+  document.getElementById('user-avatar').textContent = (currentEmail || '?')[0].toUpperCase();
+  document.getElementById('user-email-display').textContent = currentEmail;
+  showView('welcome');
+  loadProfiles();
+}
+
+async function loadProfiles() {
+  const list = document.getElementById('profile-list');
+  list.innerHTML = '<div style="padding:1rem;color:var(--text-muted);font-size:0.8rem;text-align:center;">Loading…</div>';
+  try {
+    const res = await fetch(`${API}/profiles/get-user-profiles`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+    const profiles = data.profiles || [];
+
+    if (!profiles.length) {
+      list.innerHTML = '<div style="padding:1rem;color:var(--text-muted);font-size:0.8rem;text-align:center;">No charts yet.<br>Create your first one.</div>';
+      return;
+    }
+
+    list.innerHTML = '';
+    profiles.forEach(p => {
+      const div = document.createElement('div');
+      div.className = 'profile-item';
+      div.dataset.id = p.id;
+      const d = p.birth_date
+        ? new Date(p.birth_date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })
+        : '';
+      div.innerHTML = `<div class="profile-name">${p.name}</div><div class="profile-meta">${p.city || ''} · ${d}</div>`;
+      div.onclick = () => selectProfile(p.id, p.name, div);
+      list.appendChild(div);
+    });
+  } catch (e) {
+    list.innerHTML = '<div style="padding:1rem;color:var(--text-muted);font-size:0.8rem;text-align:center;">Failed to load.</div>';
+  }
+}
+
+async function selectProfile(id, name, el) {
+  document.querySelectorAll('.profile-item').forEach(i => i.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('content-title').textContent = name;
+  document.getElementById('view-tabs').style.display = 'flex';
+
+  showLoading('Loading chart…');
+  try {
+    const res = await fetch(`${API}/profiles/get-profile-detail/${id}`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+
+    selectedProfile = data.profile;
+    selectedAnalysis = (data.analyses && data.analyses.length) ? data.analyses[0] : null;
+
+    if (!selectedAnalysis) {
+      switchView('report');
+      document.getElementById('report-name').textContent = name;
+      document.getElementById('report-date').textContent = 'No analysis found.';
+      document.getElementById('report-body').innerHTML = '';
+      return;
+    }
+
+    renderReport(selectedProfile, selectedAnalysis);
+    renderChartData(selectedAnalysis.chart_data);
+    resetChat(selectedProfile);
+    switchView('report');
+  } catch (e) {
+    alert('Failed to load profile.');
+  } finally { hideLoading(); }
+}
+
+function showNewProfile() {
+  document.querySelectorAll('.profile-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('content-title').textContent = 'New Birth Chart';
+  document.getElementById('view-tabs').style.display = 'none';
+  document.getElementById('profile-error').style.display = 'none';
+  // Clear form
+  ['p-name','p-city','p-year','p-month','p-day','p-hour','p-minute'].forEach(id => {
+    document.getElementById(id).value = '';
+  });
+  showView('new-profile');
+}
+
+// ─── Render ───────────────────────────────────────────────────────
+function renderReport(profile, analysis) {
+  document.getElementById('report-name').textContent = profile.name;
+  const d = new Date(profile.birth_date);
+  document.getElementById('report-date').textContent =
+    `${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })} · ${profile.city || ''}`;
+
+  // Convert markdown to simple HTML
+  const html = analysis.report_content
+    .replace(/^## (.+)$/gm, '<h2>$1</h2>')
+    .replace(/^# (.+)$/gm, '<h2>$1</h2>')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .split('\n\n')
+    .map(p => p.trim()).filter(Boolean)
+    .map(p => p.startsWith('<h2>') ? p : `<p>${p.replace(/\n/g, ' ')}</p>`)
+    .join('');
+
+  document.getElementById('report-body').innerHTML = html;
+}
+
+function renderChartData(chartData) {
+  const grid = document.getElementById('chart-grid');
+  const aspectsList = document.getElementById('aspects-list');
+  grid.innerHTML = ''; aspectsList.innerHTML = '';
+  if (!chartData) return;
+
+  const points = chartData.points || [];
+  const aspects = chartData.aspects || [];
+
+  // Planets (exclude House cusps)
+  points.filter(p => !p.name.startsWith('House')).forEach(p => {
+    const div = document.createElement('div');
+    div.className = 'chart-item';
+    div.innerHTML = `
+      <div class="chart-planet">${p.name}</div>
+      <div class="chart-sign">${p.sign}</div>
+      <div class="chart-degree">${p.degree_in_sign}° in ${p.sign}</div>`;
+    grid.appendChild(div);
+  });
+
+  if (!aspects.length) {
+    aspectsList.innerHTML = '<div style="color:var(--text-muted);font-size:0.85rem;padding:0.5rem 0;">No aspects found.</div>';
+  }
+  aspects.forEach(a => {
+    const row = document.createElement('div');
+    row.className = 'aspect-row';
+    row.innerHTML = `
+      <span class="aspect-type">${a.aspect}</span>
+      <span class="aspect-planets">${a.p1} — ${a.p2}</span>
+      <span class="aspect-orb">orb ${a.orb}°</span>`;
+    aspectsList.appendChild(row);
+  });
+}
+
+// ─── Chat ─────────────────────────────────────────────────────────
+function resetChat(profile) {
+  document.getElementById('chat-profile-name').textContent = profile.name;
+  document.getElementById('chat-messages').innerHTML = '';
+  document.getElementById('chat-input').value = '';
+}
+
+function addMessage(role, content) {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = `msg ${role}`;
+  const avatarContent = role === 'user' ? (currentEmail || '?')[0].toUpperCase() : '✦';
+  div.innerHTML = `
+    <div class="msg-avatar">${avatarContent}</div>
+    <div class="msg-bubble">${content.replace(/\n/g, '<br>')}</div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function showTyping() {
+  const container = document.getElementById('chat-messages');
+  const div = document.createElement('div');
+  div.className = 'msg model';
+  div.id = 'typing-indicator';
+  div.innerHTML = `
+    <div class="msg-avatar">✦</div>
+    <div class="typing-indicator">
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+      <div class="typing-dot"></div>
+    </div>`;
+  container.appendChild(div);
+  container.scrollTop = container.scrollHeight;
+}
+
+function removeTyping() {
+  const el = document.getElementById('typing-indicator');
+  if (el) el.remove();
+}
+
+async function sendMessage() {
+  if (!selectedProfile || !selectedAnalysis) return;
+  const input = document.getElementById('chat-input');
+  const question = input.value.trim();
+  if (!question) return;
+  input.value = '';
+
+  addMessage('user', question);
+  showTyping();
+
+  try {
+    const params = new URLSearchParams({ profile_id: selectedProfile.id, question });
+    const res = await fetch(`${API}/chat/ask?${params}`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+    removeTyping();
+    addMessage('model', data.answer || data.detail || 'Something went wrong.');
+  } catch (e) {
+    removeTyping();
+    addMessage('model', 'Connection error. Please try again.');
+  }
+}
+
+// ─── Create Profile ───────────────────────────────────────────────
+async function createProfile() {
+  const err = document.getElementById('profile-error');
+  err.style.display = 'none';
+
+  const name   = document.getElementById('p-name').value.trim();
+  const city   = document.getElementById('p-city').value.trim();
+  const year   = parseInt(document.getElementById('p-year').value);
+  const month  = parseInt(document.getElementById('p-month').value);
+  const day    = parseInt(document.getElementById('p-day').value);
+  const hour   = parseInt(document.getElementById('p-hour').value);
+  const minute = parseInt(document.getElementById('p-minute').value);
+
+  if (!name || !city || !year || !month || !day || isNaN(hour) || isNaN(minute)) {
+    showErr(err, 'Please fill in all fields.'); return;
+  }
+
+  showLoading('Casting the chart… this may take a moment.');
+  try {
+    const res = await fetch(`${API}/profiles/create-and-analyze`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ name, city, year, month, day, hour, minute })
+    });
+    if (res.status === 401) { logout(); return; }
+    const data = await res.json();
+    if (!res.ok) { showErr(err, data.detail || 'Failed to create chart.'); return; }
+
+    // Reload sidebar and auto-select new profile
+    await loadProfiles();
+    const newId = data.profile_id;
+    document.querySelectorAll('.profile-item').forEach(item => {
+      if (parseInt(item.dataset.id) === newId) item.click();
+    });
+  } catch (e) {
+    showErr(err, 'Connection error. Please try again.');
+  } finally { hideLoading(); }
+}
+</script>
+</body>
+</html>
